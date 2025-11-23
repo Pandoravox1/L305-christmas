@@ -25,6 +25,11 @@ const Potluck: React.FC = () => {
   const { isAdmin } = useAdmin();
   const supabaseReady = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
   const [successMsg, setSuccessMsg] = useState('');
+  const [confirmItem, setConfirmItem] = useState<{
+    id: string;
+    foodName: string;
+    bringerName: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -103,16 +108,14 @@ const Potluck: React.FC = () => {
 
   const getCategoryIcon = (cat: string) => CATEGORIES.find(c => c.id === cat)?.icon || 'restaurant';
   const getCategoryLabel = (cat: string) => CATEGORIES.find(c => c.id === cat)?.label || cat;
-  const handleDelete = (id: string, foodName: string, bringerName: string) => {
+  const handleDelete = () => {
+    if (!confirmItem) return;
     if (!isAdmin) return;
     if (!supabaseReady) {
       setErrorMsg('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
       return;
     }
-    const confirmed = window.confirm(
-      `Peringatan: Anda akan menghapus data potluck milik ${bringerName} untuk menu "${foodName}". Lanjutkan?`
-    );
-    if (!confirmed) return;
+    const { id } = confirmItem;
     const removeItem = async () => {
       setLoading(true);
       setErrorMsg('');
@@ -121,8 +124,11 @@ const Potluck: React.FC = () => {
         setErrorMsg('Gagal menghapus data. Coba lagi.');
       } else {
         setItems(current => current.filter(item => item.id !== id));
+        setSuccessMsg('Data potluck berhasil dihapus.');
+        setTimeout(() => setSuccessMsg(''), 2000);
       }
       setLoading(false);
+      setConfirmItem(null);
     };
     removeItem();
   };
@@ -133,6 +139,30 @@ const Potluck: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
           <div className="bg-primary text-white px-6 py-4 rounded-2xl shadow-2xl pointer-events-auto transform transition-all duration-300 ease-out scale-100 opacity-100 animate-pulse">
             {successMsg}
+          </div>
+        </div>
+      )}
+      {confirmItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-[modalPop_0.25s_ease]">
+            <h4 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Hapus</h4>
+            <p className="text-sm text-gray-700 mb-4">
+              Anda akan menghapus data potluck milik <strong>{confirmItem.bringerName}</strong> untuk menu <strong>"{confirmItem.foodName}"</strong>.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Hapus
+              </button>
+              <button
+                onClick={() => setConfirmItem(null)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -201,7 +231,7 @@ const Potluck: React.FC = () => {
                         {isAdmin && (
                           <button
                             type="button"
-                            onClick={() => handleDelete(item.id, item.foodName, item.bringerName)}
+                            onClick={() => setConfirmItem({ id: item.id, foodName: item.foodName, bringerName: item.bringerName })}
                             className="text-xs text-red-600 hover:text-red-700 font-semibold"
                           >
                             Hapus
