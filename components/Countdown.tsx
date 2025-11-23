@@ -29,20 +29,20 @@ const Countdown: React.FC = () => {
 
   const TimeUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
     <div className="flex flex-col gap-2 flex-1 min-w-[70px]">
-      <div className="h-16 sm:h-20 bg-primary/40 backdrop-blur-md border border-secondary/30 rounded-lg flex items-center justify-center shadow-lg">
-        <span className="text-2xl sm:text-4xl font-bold text-cream font-mono">
+      <div className="h-16 sm:h-20 bg-[#0f2b27] border border-secondary/40 rounded-lg flex items-center justify-center shadow-lg">
+        <span className="text-2xl sm:text-4xl font-bold text-white font-mono drop-shadow">
           {value.toString().padStart(2, '0')}
         </span>
       </div>
-      <span className="text-xs sm:text-sm text-cream/70 uppercase tracking-wider text-center font-medium">
+      <span className="text-xs sm:text-sm text-cream/80 uppercase tracking-wider text-center font-medium">
         {label}
       </span>
     </div>
   );
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 rounded-2xl bg-black/20 backdrop-blur-sm border border-secondary/10 mt-[-80px] z-10 relative shadow-2xl">
-      <h3 className="text-center text-secondary text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-6">
+    <div className="countdown-widget w-full max-w-2xl mx-auto p-6 rounded-2xl bg-[#0b1b17]/80 border border-secondary/30 mt-[-80px] z-10 relative shadow-2xl">
+      <h3 className="text-center text-secondary text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-6 drop-shadow">
         Perayaan Dimulai Dalam
       </h3>
       <div className="flex gap-3 sm:gap-6 justify-between">

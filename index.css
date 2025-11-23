@@ -1,37 +1,84 @@
-/* CSS placeholder for deployment; styles are provided via Tailwind CDN */
-
+/* Base transition */
 :root, body {
   transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
+/* Admin dark theme */
 .admin-dark, .admin-dark body {
-  background-color: #050505;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 215, 128, 0.08), transparent 30%),
+              radial-gradient(circle at 80% 0%, rgba(156, 214, 174, 0.08), transparent 35%),
+              linear-gradient(135deg, #050b0a 0%, #0c1b19 45%, #0b0f13 100%);
   color: #f5f5f5;
 }
+
+.admin-dark header {
+  background: rgba(6, 12, 11, 0.92) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f8faf8 !important;
+}
+.admin-dark header a {
+  color: #eef4f1 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+.admin-dark header a:hover {
+  color: #d4af37 !important;
+}
+.admin-dark header .text-gray-600,
+.admin-dark header .text-gray-700 {
+  color: #eef4f1 !important;
+}
+.admin-dark header .text-gray-500 {
+  color: #e5ece8 !important;
+}
+.admin-dark header .bg-primary {
+  background-color: #0f6a52 !important;
+}
+.admin-dark header .bg-cream {
+  color: #0d1714 !important;
+}
+.admin-dark header .text-red-600 { color: #ff8888 !important; }
 
 .admin-dark body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 30%),
-              radial-gradient(circle at 80% 0%, rgba(255,255,255,0.05), transparent 35%),
-              linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
-              linear-gradient(180deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: auto, auto, 120px 120px, 120px 120px;
+  background:
+    radial-gradient(circle at 30% 10%, rgba(255, 215, 128, 0.08), transparent 28%),
+    radial-gradient(circle at 75% 20%, rgba(110, 168, 146, 0.08), transparent 30%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: auto, auto, 140px 140px, 140px 140px;
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.5;
   z-index: 0;
 }
 
-.admin-dark .bg-background-light { background-color: #0d0d0d !important; }
-.admin-dark .bg-white { background-color: #0f0f0f !important; }
-.admin-dark .border-gray-200 { border-color: rgba(255,255,255,0.15) !important; }
+.admin-dark .bg-background-light { background-color: rgba(7, 14, 12, 0.9) !important; }
+.admin-dark .bg-white { background-color: #0f1615 !important; }
+.admin-dark .border-gray-200 { border-color: rgba(255,255,255,0.18) !important; }
 .admin-dark input, .admin-dark textarea, .admin-dark select {
-  background-color: #121212 !important;
+  background-color: #101818 !important;
   color: #f5f5f5 !important;
-  border-color: rgba(255,255,255,0.2) !important;
+  border-color: rgba(255,255,255,0.25) !important;
 }
-.admin-dark .text-gray-900 { color: #f5f5f5 !important; }
+.admin-dark .text-gray-900 { color: #f7f7f7 !important; }
 .admin-dark .text-gray-700 { color: #e6e6e6 !important; }
-.admin-dark .text-gray-600 { color: #cccccc !important; }
-.admin-dark .text-gray-500 { color: #b3b3b3 !important; }
+.admin-dark .text-gray-600 { color: #d3d3d3 !important; }
+.admin-dark .text-gray-500 { color: #bfc0c2 !important; }
+.admin-dark .bg-gray-100 { background-color: rgba(255,255,255,0.08) !important; }
+.admin-dark .text-secondary { color: #d4af37 !important; }
+.admin-dark .border-gray-300 { border-color: rgba(255,255,255,0.25) !important; }
+
+.admin-dark .countdown-widget {
+  background: rgba(7, 13, 12, 0.92) !important;
+  border-color: rgba(212, 175, 55, 0.35) !important;
+  color: #f9f9f9 !important;
+}
+.admin-dark .countdown-widget h3 {
+  color: #d4af37 !important;
+}
+.admin-dark .countdown-widget .text-cream,
+.admin-dark .countdown-widget .text-cream\/70,
+.admin-dark .countdown-widget .text-cream\/80 {
+  color: #eef4f1 !important;
+}
