@@ -4,12 +4,16 @@ type AdminContextType = {
   isAdmin: boolean;
   login: (username: string, password: string) => boolean;
   logout: () => void;
+  toggleThemeToDark: () => void;
+  resetTheme: () => void;
 };
 
 const AdminContext = createContext<AdminContextType>({
   isAdmin: false,
   login: () => false,
   logout: () => {},
+  toggleThemeToDark: () => {},
+  resetTheme: () => {},
 });
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,8 +34,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsAdmin(false);
   };
 
+  const toggleThemeToDark = () => {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.add('admin-dark');
+    document.body.classList.add('admin-dark');
+  };
+
+  const resetTheme = () => {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.remove('admin-dark');
+    document.body.classList.remove('admin-dark');
+  };
+
   return (
-    <AdminContext.Provider value={{ isAdmin, login, logout }}>
+    <AdminContext.Provider value={{ isAdmin, login, logout, toggleThemeToDark, resetTheme }}>
       {children}
     </AdminContext.Provider>
   );

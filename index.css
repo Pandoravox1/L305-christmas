@@ -1,1 +1,37 @@
 /* CSS placeholder for deployment; styles are provided via Tailwind CDN */
+
+:root, body {
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+.admin-dark, .admin-dark body {
+  background-color: #050505;
+  color: #f5f5f5;
+}
+
+.admin-dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 30%),
+              radial-gradient(circle at 80% 0%, rgba(255,255,255,0.05), transparent 35%),
+              linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+              linear-gradient(180deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: auto, auto, 120px 120px, 120px 120px;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.admin-dark .bg-background-light { background-color: #0d0d0d !important; }
+.admin-dark .bg-white { background-color: #0f0f0f !important; }
+.admin-dark .border-gray-200 { border-color: rgba(255,255,255,0.15) !important; }
+.admin-dark input, .admin-dark textarea, .admin-dark select {
+  background-color: #121212 !important;
+  color: #f5f5f5 !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+.admin-dark .text-gray-900 { color: #f5f5f5 !important; }
+.admin-dark .text-gray-700 { color: #e6e6e6 !important; }
+.admin-dark .text-gray-600 { color: #cccccc !important; }
+.admin-dark .text-gray-500 { color: #b3b3b3 !important; }

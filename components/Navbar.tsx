@@ -6,7 +6,7 @@ import { useAdmin } from './AdminContext';
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { isAdmin, login, logout } = useAdmin();
+  const { isAdmin, login, logout, toggleThemeToDark, resetTheme } = useAdmin();
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminUserInput, setAdminUserInput] = useState('');
   const [adminPassInput, setAdminPassInput] = useState('');
@@ -21,6 +21,7 @@ const Navbar: React.FC = () => {
       setAdminError('');
       setShowAdminModal(false);
       setAdminPassInput('');
+      toggleThemeToDark();
     } else {
       setAdminError('Username atau password salah.');
     }
@@ -77,7 +78,7 @@ const Navbar: React.FC = () => {
             </button>
             {isAdmin && (
               <button
-                onClick={logout}
+                onClick={() => { logout(); resetTheme(); }}
                 className="text-xs text-red-600 hover:text-red-700 font-semibold"
               >
                 Keluar
@@ -131,7 +132,7 @@ const Navbar: React.FC = () => {
                 </button>
                 {isAdmin && (
                   <button
-                    onClick={() => { logout(); setIsMenuOpen(false); }}
+                    onClick={() => { logout(); resetTheme(); setIsMenuOpen(false); }}
                     className="text-sm text-red-600 hover:text-red-700 text-left px-2"
                   >
                     Keluar Admin
@@ -165,6 +166,7 @@ const Navbar: React.FC = () => {
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Login Admin</h3>
                 <p className="text-sm text-gray-600">Masuk untuk mengelola data potluck (hapus item).</p>
+                <p className="text-xs text-red-600 font-semibold mt-1">Cuma Pak Frenaldi yang bisa akses.</p>
               </div>
             </div>
             <form onSubmit={handleAdminSubmit} className="space-y-4">
