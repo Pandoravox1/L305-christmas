@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import SecretSanta from './pages/SecretSanta';
 import Potluck from './pages/Potluck';
 import RSVP from './pages/RSVP';
+import { AdminProvider } from './components/AdminContext';
 
 // Scroll to top wrapper
 const ScrollToTop: React.FC = () => {
@@ -18,21 +19,23 @@ const ScrollToTop: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <ScrollToTop />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/secret-santa" element={<SecretSanta />} />
-            <Route path="/potluck" element={<Potluck />} />
-            <Route path="/rsvp" element={<RSVP />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+    <AdminProvider>
+      <Router>
+        <ScrollToTop />
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/secret-santa" element={<SecretSanta />} />
+              <Route path="/potluck" element={<Potluck />} />
+              <Route path="/rsvp" element={<RSVP />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AdminProvider>
   );
 };
 

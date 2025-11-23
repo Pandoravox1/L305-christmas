@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { INITIAL_POTLUCK_ITEMS } from '../constants';
 import { PotluckItem, PotluckCategory } from '../types';
+import { useAdmin } from '../components/AdminContext';
+import { supabase } from '../supabaseClient';
 
 const CATEGORIES: { id: PotluckCategory; label: string; icon: string }[] = [
   { id: 'all', label: 'Semua', icon: 'restaurant' },
@@ -13,11 +15,49 @@ const CATEGORIES: { id: PotluckCategory; label: string; icon: string }[] = [
 const Potluck: React.FC = () => {
   const [items, setItems] = useState<PotluckItem[]>(INITIAL_POTLUCK_ITEMS);
   const [activeCategory, setActiveCategory] = useState<PotluckCategory>('all');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   
   // Form State
   const [newName, setNewName] = useState('');
   const [newFood, setNewFood] = useState('');
   const [newCategory, setNewCategory] = useState<Exclude<PotluckCategory, 'all'>>('main-course');
+  const { isAdmin } = useAdmin();
+  const supabaseReady = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      setErrorMsg('');
+      if (!supabaseReady) {
+        setErrorMsg('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('potluck_items')
+        .select('id, bringer_name, food_name, category')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        setErrorMsg(`Gagal memuat data potluck: ${error.message}`);
+        setItems([]);
+      } else if (data) {
+        const mapped = data.map((row) => ({
+          id: row.id?.toString?.() ?? `${Date.now()}`,
+          bringerName: (row as any).bringer_name || 'Tanpa Nama',
+          foodName: (row as any).food_name || 'Hidangan',
+          category: (row.category as PotluckItem['category']) || 'main-course',
+        }));
+        setItems(mapped);
+      }
+      setLoading(false);
+    };
+
+    fetchItems();
+  }, []);
 
   const filteredItems = activeCategory === 'all' 
     ? items 
@@ -26,25 +66,76 @@ const Potluck: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName || !newFood) return;
+    if (!supabaseReady) {
+      setErrorMsg('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
+      return;
+    }
 
-    const newItem: PotluckItem = {
-      id: Date.now().toString(),
-      bringerName: newName,
-      foodName: newFood,
-      category: newCategory,
+    const addItem = async () => {
+      setLoading(true);
+      setErrorMsg('');
+      const { data, error } = await supabase
+        .from('potluck_items')
+        .insert({ bringer_name: newName, food_name: newFood, category: newCategory })
+        .select('id, bringer_name, food_name, category')
+        .single();
+
+      if (error) {
+        setErrorMsg(`Gagal menambahkan data: ${error.message}`);
+      } else if (data) {
+        const newItem: PotluckItem = {
+          id: data.id?.toString?.() ?? Date.now().toString(),
+          bringerName: (data as any).bringer_name,
+          foodName: (data as any).food_name,
+          category: data.category as PotluckItem['category'],
+        };
+        setItems((prev) => [...prev, newItem]);
+        setNewName('');
+        setNewFood('');
+        setSuccessMsg('Terima kasih sudah berkontribusi! Hidanganmu telah ditambahkan.');
+        setTimeout(() => setSuccessMsg(''), 2500);
+      }
+      setLoading(false);
     };
 
-    setItems([...items, newItem]);
-    setNewName('');
-    setNewFood('');
-    alert("Terima kasih sudah berkontribusi! Hidanganmu telah ditambahkan.");
+    addItem();
   };
 
   const getCategoryIcon = (cat: string) => CATEGORIES.find(c => c.id === cat)?.icon || 'restaurant';
   const getCategoryLabel = (cat: string) => CATEGORIES.find(c => c.id === cat)?.label || cat;
+  const handleDelete = (id: string, foodName: string, bringerName: string) => {
+    if (!isAdmin) return;
+    if (!supabaseReady) {
+      setErrorMsg('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Peringatan: Anda akan menghapus data potluck milik ${bringerName} untuk menu "${foodName}". Lanjutkan?`
+    );
+    if (!confirmed) return;
+    const removeItem = async () => {
+      setLoading(true);
+      setErrorMsg('');
+      const { error } = await supabase.from('potluck_items').delete().eq('id', id);
+      if (error) {
+        setErrorMsg('Gagal menghapus data. Coba lagi.');
+      } else {
+        setItems(current => current.filter(item => item.id !== id));
+      }
+      setLoading(false);
+    };
+    removeItem();
+  };
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark pb-20">
+      {successMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-primary text-white px-6 py-4 rounded-2xl shadow-2xl pointer-events-auto transform transition-all duration-300 ease-out scale-100 opacity-100 animate-pulse">
+            {successMsg}
+          </div>
+        </div>
+      )}
       <div className="bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-12 text-center">
           <h1 className="font-script text-secondary text-5xl md:text-6xl mb-4">Jamuan yang Berkesan</h1>
@@ -82,7 +173,10 @@ const Potluck: React.FC = () => {
 
               {/* Items List */}
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredItems.length === 0 ? (
+                {loading && (
+                  <div className="py-6 text-center text-gray-500">Memuat data potluck...</div>
+                )}
+                {!loading && filteredItems.length === 0 ? (
                   <div className="py-8 text-center text-gray-500">Belum ada menu di kategori ini. Yuk jadi yang pertama!</div>
                 ) : (
                   filteredItems.map((item) => (
@@ -97,12 +191,23 @@ const Potluck: React.FC = () => {
                           {item.foodName}
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Brought by {item.bringerName}
+                          Dibawa oleh {item.bringerName}
                         </p>
                       </div>
-                      <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                        {getCategoryLabel(item.category)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                          {getCategoryLabel(item.category)}
+                        </span>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item.id, item.foodName, item.bringerName)}
+                            className="text-xs text-red-600 hover:text-red-700 font-semibold"
+                          >
+                            Hapus
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -111,7 +216,17 @@ const Potluck: React.FC = () => {
           </div>
 
           {/* Form Section */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {isAdmin && (
+              <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 text-sm shadow-sm">
+                Mode admin aktif. Tombol hapus tersedia di daftar potluck.
+              </div>
+            )}
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
+                {errorMsg}
+              </div>
+            )}
             <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm sticky top-24">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Apa yang akan kamu bawa?</h3>
               

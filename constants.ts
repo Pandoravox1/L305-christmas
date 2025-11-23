@@ -10,13 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Secret Santa", path: "/secret-santa" },
 ];
 
-export const INITIAL_POTLUCK_ITEMS: PotluckItem[] = [
-  { id: '1', bringerName: 'Budi Santoso', foodName: 'Spring Rolls', category: 'appetizer' },
-  { id: '2', bringerName: 'Siti Aminah', foodName: 'Roasted Chicken', category: 'main-course' },
-  { id: '3', bringerName: 'John Doe', foodName: 'Pasta Carbonara', category: 'main-course' },
-  { id: '4', bringerName: 'Maria', foodName: 'Chocolate Lava Cake', category: 'dessert' },
-  { id: '5', bringerName: 'Kevin', foodName: 'Iced Lemon Tea', category: 'beverage' },
-];
+export const INITIAL_POTLUCK_ITEMS: PotluckItem[] = [];
 
 export const SANTA_FAQS: FAQItem[] = [
   {
