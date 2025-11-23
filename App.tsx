@@ -7,6 +7,7 @@ import SecretSanta from './pages/SecretSanta';
 import Potluck from './pages/Potluck';
 import RSVP from './pages/RSVP';
 import { AdminProvider } from './components/AdminContext';
+import AudioPlayer from './components/AudioPlayer';
 
 // Scroll to top wrapper
 const ScrollToTop: React.FC = () => {
@@ -33,6 +34,7 @@ const App: React.FC = () => {
             </Routes>
           </main>
           <Footer />
+          <AudioPlayer />
         </div>
       </Router>
     </AdminProvider>
