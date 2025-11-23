@@ -269,7 +269,7 @@ const Potluck: React.FC = () => {
                     required
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="mis. Budi Santoso"
+                    placeholder=""
                     className="w-full rounded-lg border-gray-300 bg-gray-50 focus:border-primary focus:ring-primary dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                   />
                 </div>
@@ -282,7 +282,7 @@ const Potluck: React.FC = () => {
                     required
                     value={newFood}
                     onChange={(e) => setNewFood(e.target.value)}
-                    placeholder="mis. Lasagna"
+                    placeholder=""
                     className="w-full rounded-lg border-gray-300 bg-gray-50 focus:border-primary focus:ring-primary dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                   />
                 </div>
