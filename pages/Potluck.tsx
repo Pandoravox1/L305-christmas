@@ -43,20 +43,21 @@ const Potluck: React.FC = () => {
       }
       const { data, error } = await supabase
         .from('potluck_items')
-        .select('id, bringer_name, food_name, category')
+        .select('id, bringername, foodname, category')
         .order('created_at', { ascending: true });
 
       if (error) {
         setErrorMsg(`Gagal memuat data potluck: ${error.message}`);
         setItems([]);
       } else if (data) {
-        const mapped = data.map((row) => ({
-          id: row.id?.toString?.() ?? `${Date.now()}`,
-          bringerName: (row as any).bringer_name || 'Tanpa Nama',
-          foodName: (row as any).food_name || 'Hidangan',
-          category: (row.category as PotluckItem['category']) || 'main-course',
-        }));
-        setItems(mapped);
+        setItems(
+          data.map((row) => ({
+            id: row.id?.toString?.() ?? `${Date.now()}`,
+            bringerName: (row as any).bringername || 'Tanpa Nama',
+            foodName: (row as any).foodname || 'Hidangan',
+            category: (row.category as PotluckItem['category']) || 'main-course',
+          }))
+        );
       }
       setLoading(false);
     };
@@ -81,20 +82,22 @@ const Potluck: React.FC = () => {
       setErrorMsg('');
       const { data, error } = await supabase
         .from('potluck_items')
-        .insert({ bringer_name: newName, food_name: newFood, category: newCategory })
-        .select('id, bringer_name, food_name, category')
+        .insert({ bringername: newName, foodname: newFood, category: newCategory })
+        .select('id, bringername, foodname, category')
         .single();
 
       if (error) {
         setErrorMsg(`Gagal menambahkan data: ${error.message}`);
       } else if (data) {
-        const newItem: PotluckItem = {
-          id: data.id?.toString?.() ?? Date.now().toString(),
-          bringerName: (data as any).bringer_name,
-          foodName: (data as any).food_name,
-          category: data.category as PotluckItem['category'],
-        };
-        setItems((prev) => [...prev, newItem]);
+        setItems((prev) => [
+          ...prev,
+          {
+            id: data.id?.toString?.() ?? Date.now().toString(),
+            bringerName: (data as any).bringername,
+            foodName: (data as any).foodname,
+            category: data.category as PotluckItem['category'],
+          },
+        ]);
         setNewName('');
         setNewFood('');
         setSuccessMsg('Terima kasih sudah berkontribusi! Hidanganmu telah ditambahkan.');

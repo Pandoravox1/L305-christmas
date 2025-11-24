@@ -18,7 +18,7 @@ const AudioPlayer: React.FC = () => {
       try {
         await audio.play();
         setIsPlaying(true);
-        setToast('Wham! - Last Christmas sedang diputar');
+        setToast('Gateway Worship - Christmas Worship Medley sedang diputar');
         setTimeout(() => setToast(''), 2000);
       } catch {
         setIsPlaying(false);
@@ -44,7 +44,7 @@ const AudioPlayer: React.FC = () => {
       )}
       <audio
         ref={audioRef}
-        src="/audio/last-christmas.mp3"
+        src="/audio/christmas-worship-medley.mp3"
         loop
         preload="metadata"
         className="hidden"
