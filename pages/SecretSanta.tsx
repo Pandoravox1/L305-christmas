@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SANTA_FAQS, TARGET_SANTA_DEADLINE } from '../constants';
 import { CountdownTime } from '../types';
+import { supabase } from '../supabaseClient';
 
 const SecretSanta: React.FC = () => {
   const calculateTimeLeft = (): CountdownTime => {
@@ -19,6 +20,12 @@ const SecretSanta: React.FC = () => {
   };
 
   const [deadlineLeft, setDeadlineLeft] = useState<CountdownTime>(calculateTimeLeft());
+  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [names, setNames] = useState<string[]>([]);
+  const supabaseReady = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,8 +35,49 @@ const SecretSanta: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const fetchNames = async () => {
+      if (!supabaseReady) return;
+      const { data, error } = await supabase
+        .from('secret_santa_signups')
+        .select('name')
+        .order('created_at', { ascending: true });
+      if (!error && data) {
+        setNames(data.map((d) => d.name).filter(Boolean));
+      }
+    };
+    fetchNames();
+  }, [supabaseReady]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !contact) return;
+    const save = async () => {
+      if (supabaseReady) {
+        const { error } = await supabase
+          .from('secret_santa_signups')
+          .insert({ name, contact });
+        if (!error) {
+          setNames((prev) => [...prev, name]);
+        }
+      }
+      setSuccessMsg('Terima kasih! Kamu terdaftar di Secret Santa 🎁');
+      setTimeout(() => setSuccessMsg(''), 2500);
+      setName('');
+      setContact('');
+      setShowModal(false);
+    };
+    save();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
       {/* Hero */}
       <div className="relative bg-primary py-20 px-4">
         <div className="absolute inset-0 overflow-hidden">
@@ -47,7 +95,10 @@ const SecretSanta: React.FC = () => {
             Ikuti keseruan tukar kado misteri di kelas kita. Biar momen ini jadi kenangan yang susah dilupakan!
           </p>
           <div className="pt-6">
-            <button className="bg-tertiary text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:scale-105 transition-transform">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-tertiary text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:scale-105 transition-transform"
+            >
               Daftar Secret Santa Sekarang
             </button>
           </div>
@@ -138,8 +189,90 @@ const SecretSanta: React.FC = () => {
             </div>
           </div>
 
+          {names.length > 0 && (
+            <div className="mt-10 bg-primary/10 border border-secondary/30 rounded-2xl p-4 overflow-hidden">
+              <div className="text-center text-sm text-secondary font-semibold mb-2">Yang sudah daftar:</div>
+              <div className="relative overflow-hidden h-10">
+                <div
+                  className="absolute whitespace-nowrap flex gap-8 text-white text-lg font-bold animate-[marquee_12s_linear_infinite]"
+                  style={{ width: '200%' }}
+                >
+                  {[...names, ...names].map((n, idx) => (
+                    <span key={idx} className="drop-shadow">{n}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative overflow-hidden"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1400&auto=format&fit=crop')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40" />
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              aria-label="Tutup"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="relative z-10 flex items-center gap-3 mb-4">
+              <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
+                <span className="text-3xl">🎅</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white drop-shadow">Daftar Secret Santa</h3>
+                <p className="text-sm text-white/90">Lengkapi data singkatmu di bawah ini.</p>
+              </div>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+              <div>
+                <label className="block text-sm font-semibold text-white mb-1">Namamu</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-white/40 px-3 py-2 bg-white/90 focus:border-secondary focus:ring-secondary text-gray-900"
+                  placeholder="Nama lengkap"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-white mb-1">Kontak (Email/WA)</label>
+                <input
+                  type="text"
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-white/40 px-3 py-2 bg-white/90 focus:border-secondary focus:ring-secondary text-gray-900"
+                  placeholder="email@example.com / 08xxxx"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-md"
+              >
+                Kirim Pendaftaran
+              </button>
+            </form>
+            {successMsg && (
+              <div className="mt-4 text-center text-green-100 font-semibold relative z-10">
+                {successMsg}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
