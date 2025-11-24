@@ -6,7 +6,6 @@ import { supabase } from '../supabaseClient';
 const SecretSanta: React.FC = () => {
   const calculateTimeLeft = (): CountdownTime => {
     const difference = +new Date(TARGET_SANTA_DEADLINE) - +new Date();
-
     if (difference > 0) {
       return {
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -15,73 +14,137 @@ const SecretSanta: React.FC = () => {
         seconds: Math.floor((difference / 1000) % 60),
       };
     }
-
     return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   };
 
   const [deadlineLeft, setDeadlineLeft] = useState<CountdownTime>(calculateTimeLeft());
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
-  const [contact, setContact] = useState('');
+  const [wishlist, setWishlist] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [names, setNames] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [signups, setSignups] = useState<{ name: string; wishlist: string }[]>([]);
+  const [pairs, setPairs] = useState<{ giver: string; receiver: string; wishlist: string }[]>([]);
+  const [viewerName, setViewerName] = useState('');
+  const [myPair, setMyPair] = useState<{ receiver: string; wishlist: string } | null>(null);
   const supabaseReady = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDeadlineLeft(calculateTimeLeft());
-    }, 1000);
+  const displayNames = signups.length ? Array.from(new Set(signups.map((s) => s.name))) : ['Belum ada pendaftar'];
 
+  useEffect(() => {
+    const timer = setInterval(() => setDeadlineLeft(calculateTimeLeft()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const fetchNames = async () => {
+    if (!supabaseReady) return;
+    const { data, error } = await supabase
+      .from('secret_santa_signups')
+      .select('name, wishlist')
+      .order('created_at', { ascending: true });
+    if (!error && data) {
+      setSignups(
+        data
+          .filter((d) => d.name)
+          .map((d) => ({
+            name: d.name || '',
+            wishlist: d.wishlist || '',
+          }))
+      );
+    }
+  };
+
   useEffect(() => {
-    const fetchNames = async () => {
-      if (!supabaseReady) return;
-      const { data, error } = await supabase
-        .from('secret_santa_signups')
-        .select('name')
-        .order('created_at', { ascending: true });
-      if (!error && data) {
-        setNames(data.map((d) => d.name).filter(Boolean));
-      }
-    };
     fetchNames();
   }, [supabaseReady]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !contact) return;
+    if (!name || !wishlist) return;
+    setErrorMsg('');
     const save = async () => {
       if (supabaseReady) {
-        const { error } = await supabase
-          .from('secret_santa_signups')
-          .insert({ name, contact });
-        if (!error) {
-          setNames((prev) => [...prev, name]);
+        const { error } = await supabase.from('secret_santa_signups').insert({ name, wishlist });
+        if (error) {
+          setErrorMsg('Gagal menyimpan ke Supabase. Coba lagi.');
+        } else {
+          await fetchNames();
         }
       }
       setSuccessMsg('Terima kasih! Kamu terdaftar di Secret Santa 🎁');
       setTimeout(() => setSuccessMsg(''), 2500);
       setName('');
-      setContact('');
+      setWishlist('');
       setShowModal(false);
     };
     save();
   };
 
+  const generatePairs = () => {
+    setErrorMsg('');
+    if (displayNames.length < 5) {
+      setErrorMsg('Minimal 5 pendaftar sebelum generate pasangan.');
+      return;
+    }
+    const givers = [...signups];
+    let receivers = [...signups];
+    const shuffle = (arr: typeof signups) => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    };
+    let attempts = 0;
+    let valid = false;
+    while (attempts < 30 && !valid) {
+      shuffle(receivers);
+      valid = givers.every((g, idx) => g.name !== receivers[idx].name);
+      attempts++;
+    }
+    if (!valid) {
+      setErrorMsg('Gagal menghasilkan pasangan unik. Coba lagi.');
+      return;
+    }
+    const pairing = givers.map((g, idx) => ({
+      giver: g.name,
+      receiver: receivers[idx].name,
+      wishlist: receivers[idx].wishlist || '-',
+    }));
+    setPairs(pairing);
+    setMyPair(null);
+  };
+
+  const revealMyPair = () => {
+    setErrorMsg('');
+    if (!viewerName.trim()) {
+      setErrorMsg('Isi namamu untuk melihat pasangan.');
+      return;
+    }
+    if (pairs.length === 0) {
+      setErrorMsg('Silakan generate pasangan terlebih dahulu.');
+      return;
+    }
+    const found = pairs.find((p) => p.giver.toLowerCase() === viewerName.trim().toLowerCase());
+    if (!found) {
+      setErrorMsg('Namamu tidak ditemukan di hasil generate.');
+      setMyPair(null);
+      return;
+    }
+    setMyPair({ receiver: found.receiver, wishlist: found.wishlist });
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+        @keyframes marqueeSlide {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
         }
       `}</style>
       {/* Hero */}
       <div className="relative bg-primary py-20 px-4">
         <div className="absolute inset-0 overflow-hidden">
-           <div 
+          <div
             className="absolute inset-0 opacity-20 bg-cover bg-center"
             style={{ backgroundImage: `url('https://images.unsplash.com/photo-1512389142860-9c449e58a543?q=80&w=2938&auto=format&fit=crop')` }}
           />
@@ -89,25 +152,78 @@ const SecretSanta: React.FC = () => {
         </div>
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
-            L305 Secret Santa:<br/><span className="text-secondary">Tukar Kado Paling Seru!</span>
+            L305 Secret Santa:<br /><span className="text-secondary">Tukar Kado Paling Seru!</span>
           </h1>
           <p className="text-cream/80 max-w-2xl mx-auto text-lg">
             Ikuti keseruan tukar kado misteri di kelas kita. Biar momen ini jadi kenangan yang susah dilupakan!
           </p>
-          <div className="pt-6">
+          <div className="pt-6 space-y-3">
             <button
               onClick={() => setShowModal(true)}
               className="bg-tertiary text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:scale-105 transition-transform"
             >
               Daftar Secret Santa Sekarang
             </button>
+            <div>
+              <div className="relative overflow-hidden rounded-full border border-secondary/60 bg-gradient-to-r from-[#0f2b27]/80 via-[#0c221e]/80 to-[#0f2b27]/80 backdrop-blur-lg px-6 py-3 max-w-4xl mx-auto shadow-lg">
+                <div
+                  className="whitespace-nowrap flex items-center gap-8 text-cream text-3xl sm:text-4xl font-bold animate-[marqueeSlide_16s_linear_infinite]"
+                  style={{ fontFamily: '"Great Vibes", cursive' }}
+                >
+                  {displayNames.map((n, idx) => (
+                    <React.Fragment key={`${n}-${idx}`}>
+                      <span className="drop-shadow-lg">{n}</span>
+                      {idx !== displayNames.length - 1 && <span className="text-secondary text-2xl">❄</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+              <button
+                onClick={generatePairs}
+                disabled={signups.length < 5}
+                className={`px-5 py-2 rounded-lg font-semibold shadow ${
+                  signups.length < 5
+                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                    : 'bg-secondary text-primary hover:bg-secondary/90 transition-colors'
+                }`}
+              >
+                Generate Pasangan
+              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={viewerName}
+                  onChange={(e) => setViewerName(e.target.value)}
+                  placeholder="Namamu"
+                  className="px-3 py-2 rounded-lg border border-secondary/40 bg-white/80 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={revealMyPair}
+                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold shadow hover:bg-primary/90 transition-colors"
+                >
+                  Lihat Pasangan
+                </button>
+              </div>
+              {signups.length < 5 && (
+                <span className="text-xs text-cream/80">Minimal 5 pendaftar untuk generate.</span>
+              )}
+            </div>
+            {errorMsg && <div className="text-sm text-red-200">{errorMsg}</div>}
+            {myPair && (
+              <div className="mt-2 text-sm text-cream bg-black/30 border border-secondary/40 rounded-xl px-4 py-3 inline-block shadow">
+                Pasanganmu: <span className="font-bold text-secondary">{myPair.receiver}</span> • Wishlist:{' '}
+                <span className="font-semibold">{myPair.wishlist}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       <div className="flex-1 bg-background-light dark:bg-background-dark">
         <div className="max-w-5xl mx-auto px-4 py-12 space-y-16">
-          
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
@@ -129,22 +245,22 @@ const SecretSanta: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Pendaftaran Ditutup Dalam</h2>
-                 <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                    {[
-                      { val: deadlineLeft.days, label: 'Hari' },
-                      { val: deadlineLeft.hours, label: 'Jam' },
-                      { val: deadlineLeft.minutes, label: 'Menit' },
-                      { val: deadlineLeft.seconds, label: 'Detik' }
-                    ].map((t, idx) => (
-                      <div key={idx} className="flex flex-col gap-2">
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg py-4">
-                          <span className="text-2xl font-bold text-gray-900 block">{String(t.val).padStart(2, '0')}</span>
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">{t.label}</span>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Pendaftaran Ditutup Dalam</h2>
+                <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                  {[
+                    { val: deadlineLeft.days, label: 'Hari' },
+                    { val: deadlineLeft.hours, label: 'Jam' },
+                    { val: deadlineLeft.minutes, label: 'Menit' },
+                    { val: deadlineLeft.seconds, label: 'Detik' },
+                  ].map((t, idx) => (
+                    <div key={idx} className="flex flex-col gap-2">
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg py-4">
+                        <span className="text-2xl font-bold text-gray-900 block">{String(t.val).padStart(2, '0')}</span>
                       </div>
-                    ))}
-                 </div>
+                      <span className="text-xs text-gray-500 font-medium">{t.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -188,23 +304,6 @@ const SecretSanta: React.FC = () => {
               ))}
             </div>
           </div>
-
-          {names.length > 0 && (
-            <div className="mt-10 bg-primary/10 border border-secondary/30 rounded-2xl p-4 overflow-hidden">
-              <div className="text-center text-sm text-secondary font-semibold mb-2">Yang sudah daftar:</div>
-              <div className="relative overflow-hidden h-10">
-                <div
-                  className="absolute whitespace-nowrap flex gap-8 text-white text-lg font-bold animate-[marquee_12s_linear_infinite]"
-                  style={{ width: '200%' }}
-                >
-                  {[...names, ...names].map((n, idx) => (
-                    <span key={idx} className="drop-shadow">{n}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
         </div>
       </div>
 
@@ -248,14 +347,14 @@ const SecretSanta: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-white mb-1">Kontak (Email/WA)</label>
+                <label className="block text-sm font-semibold text-white mb-1">Whishlist</label>
                 <input
                   type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
+                  value={wishlist}
+                  onChange={(e) => setWishlist(e.target.value)}
                   required
                   className="w-full rounded-lg border border-white/40 px-3 py-2 bg-white/90 focus:border-secondary focus:ring-secondary text-gray-900"
-                  placeholder="email@example.com / 08xxxx"
+                  placeholder="Tulis wishlist kado"
                 />
               </div>
               <button
