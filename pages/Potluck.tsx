@@ -205,7 +205,7 @@ const Potluck: React.FC = () => {
               </div>
 
               {/* Items List */}
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[420px] overflow-y-auto pr-1 scroll-elegant">
                 {loading && (
                   <div className="py-6 text-center text-gray-500">Memuat data potluck...</div>
                 )}

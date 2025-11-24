@@ -82,3 +82,25 @@
 .admin-dark .countdown-widget .text-cream\/80 {
   color: #eef4f1 !important;
 }
+
+/* Elegant scrollbar for potluck list */
+.scroll-elegant::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-elegant::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+.scroll-elegant::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37, #0f6a52);
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+}
+.scroll-elegant::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e6c45d, #137e62);
+}
+.scroll-elegant {
+  scrollbar-width: thin;
+  scrollbar-color: #d4af37 rgba(255, 255, 255, 0.08);
+}
